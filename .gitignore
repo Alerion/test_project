@@ -3,6 +3,7 @@ __pycache__/
 *$py.class
 
 /venv/
+db.sqlite3
 
 /.idea/
 /.ipynb_checkpoints/
