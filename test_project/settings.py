@@ -124,3 +124,5 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'frontend/static'),
 ]
+
+MODELS_CACHE_DIR = os.path.join(BASE_DIR, 'models_cache')
