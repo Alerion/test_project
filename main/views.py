@@ -1,5 +1,3 @@
-import json
-
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -20,17 +18,23 @@ def load_current_text(request):
 @csrf_exempt
 @require_POST
 def process_text(request):
-    # TODO: add validation
-    data = json.loads(request.body)
-    text = data['text']
-    model, corpus = create_model(text)
-    request.session['text'] = text
-    request.session['path'] = save_model(model)
-    request.session['corpus'] = dump_corpus(corpus)
-    return JsonResponse(_get_data_from_session(request))
+    # TODO: Do not process same text twice
+    text = request.POST['text']
+    size = len(text.encode('utf-8'))
+    if size > 64 * 1024:
+        return JsonResponse({'errors': ['Max text size is 64KB']})
+    elif size == 0:
+        return JsonResponse({'errors': ['Add some text']})
+    else:
+        model, corpus = create_model(text)
+        request.session['text'] = text
+        request.session['path'] = save_model(model)
+        request.session['corpus'] = dump_corpus(corpus)
+        return JsonResponse(_get_data_from_session(request))
 
 
 def get_similarity(request):
+    # TODO: add validation
     sentence_id = request.GET['sentence_id']
     model = load_model(request.session['path'])
     corpus = load_corpus(request.session['corpus'])
@@ -41,7 +45,7 @@ def get_similarity(request):
     sorted_similarity = sorted(similarity.items(), key=lambda item: item[1], reverse=True)
 
     similar = []
-    for i, value in sorted_similarity[:20]:
+    for i, value in sorted_similarity:
         similar.append({
             'value': float(value),
             'sentence': corpus[i].original

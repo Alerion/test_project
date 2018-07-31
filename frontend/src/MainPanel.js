@@ -8,6 +8,7 @@ import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import red from '@material-ui/core/colors/red';
 
 
 const styles = theme => ({
@@ -56,7 +57,7 @@ class MainPanel extends React.Component {
   }
 
   render() {
-    const { classes, placeholder, sentences, similar} = this.props;
+    const { classes, placeholder, sentences, similar, errors} = this.props;
     const sentencesList = sentences.map((text, index) =>
       <ListItem button key={index}>
         <ListItemText primary={text} onClick={this.processSentence.bind(this, index)} />
@@ -73,8 +74,9 @@ class MainPanel extends React.Component {
         <Grid container spacing={24}>
           <Grid item xs={12}>
             <Paper className={classes.paper}>
-              <div>{placeholder}</div>
               <TextField fullWidth multiline rows={10} value={this.state.text} onChange={this.handleTextChange}/>
+              <div style={{padding: 3}}>{placeholder}</div>
+              <div style={{color: red[500], padding: 3}}>{errors}</div>
               <Button onClick={this.onProcessClick} color="primary" variant="contained" className={classes.button}>Process</Button>
             </Paper>
           </Grid>
@@ -98,12 +100,14 @@ MainPanel.propTypes = {
   text: PropTypes.string,
   sentences: PropTypes.array,
   similar: PropTypes.array,
+  errors: PropTypes.array,
 };
 
 MainPanel.defaultProps = {
   text: '',
   sentences: [],
   similar: [],
+  errors: [],
 };
 
 export default withStyles(styles)(MainPanel);

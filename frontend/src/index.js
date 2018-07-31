@@ -11,44 +11,22 @@ class App extends React.Component {
     super(props);
     this.state = {
       data: {},
-      placeholder: "Loading...",
+      placeholder: "",
       loaded: false,
-      similar: []
+      similar: [],
+      errors: [],
     };
     this.processText = this.processText.bind(this);
     this.getSimilarity = this.getSimilarity.bind(this);
-  }
-
-  getSimilarity(sentenceId) {
-    $.get(this.props.endpoints.getSimilarity, {sentence_id: sentenceId}, response => {
-      this.setState({similar: response.similar});
-    });
-  }
-
-  processText(text) {
-    fetch(this.props.endpoints.processText, {
-      method: 'post',
-      body: JSON.stringify({text: text}),
-      credentials: 'include'
-    }).then(function (response) {
-      // FIXME: hadnle errors
-      return response.json();
-    }).then(response => {
-      this.setState({data: response})
-    });
+    this.handleFailedRequest = this.handleFailedRequest.bind(this);
   }
 
   componentDidMount() {
-    fetch(this.props.endpoints.loadCurrentText, {
-      credentials: 'include'
-    }).then(response => {
-      if (response.status !== 200) {
-        return this.setState({placeholder: "Something went wrong"});
-      }
-      return response.json();
-    }).then(response => {
-      this.setState({data: response, loaded: true, placeholder: ''})
-    });
+    this.setState({placeholder: "Loading..."});
+    $.get(this.props.endpoints.loadCurrentText, response => {
+      this.setState({data: response, loaded: true, placeholder: ''});
+      this.setState({placeholder: ""});
+    }).fail(this.handleFailedRequest);
   }
 
   render() {
@@ -59,8 +37,41 @@ class App extends React.Component {
                       similar={this.state.similar}
                       processText={this.processText}
                       processSentence={this.getSimilarity}
+                      errors={this.state.errors}
 
     />;
+  }
+
+  getSimilarity(sentenceId) {
+    this.setState({errors: [], placeholder: "Loading...", similar: []});
+    $.get(this.props.endpoints.getSimilarity, {sentence_id: sentenceId}, response => {
+      this.setState({placeholder: ""});
+      if (response.errors) {
+        this.setState({errors: response.errors});
+      } else {
+        this.setState({similar: response.similar});
+      }
+    }).fail(this.handleFailedRequest);
+  }
+
+  processText(text) {
+    // TODO: Add client side validation and do not send a lot of text to server
+    this.setState({errors: [], placeholder: "Loading...", similar: []});
+    $.post(this.props.endpoints.processText, {text: text}, response => {
+      this.setState({placeholder: ""});
+      if (response.errors) {
+        this.setState({errors: response.errors});
+      } else {
+        this.setState({data: response});
+      }
+    }).fail(this.handleFailedRequest);
+  }
+
+  handleFailedRequest() {
+    this.setState({
+      errors: ["Internal Server Error"],
+      placeholder: ""
+    });
   }
 }
 
